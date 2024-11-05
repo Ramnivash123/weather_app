@@ -1,0 +1,64 @@
+﻿@page "/Signin"
+@using System.ComponentModel.DataAnnotations
+@inject GetService GetService
+@using MongoDB.Driver
+@inject NavigationManager Navigation
+
+
+
+<EditForm Model="@model" OnValidSubmit="OnValidSubmit">
+    <DataAnnotationsValidator />
+    <MudGrid>
+        <MudItem xs="12" sm="7">
+            <MudCard>
+                <MudCardContent>
+                    <MudTextField Label="Email" Class="mt-3"
+                                  @bind-Value="model.Email" For="@(() => model.Email)" />
+                    <MudTextField Label="Password" Class="mt-3"
+                                  @bind-Value="model.Password" For="@(() => model.Password)" InputType="InputType.Password" />
+                </MudCardContent>
+                <MudCardActions>
+                    <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary">Login</MudButton>
+                </MudCardActions>
+            </MudCard>
+        </MudItem>
+    </MudGrid>
+</EditForm>
+
+
+@code {
+    RegisterAccountForm model = new RegisterAccountForm();
+
+    public class RegisterAccountForm
+    {
+        [Required]
+        [EmailAddress]
+        public string? Email { get; set; }
+
+        [Required]
+        public string? Password { get; set; }
+
+    }
+
+    private async Task OnValidSubmit()
+    {
+        var emailPasswordDict = await GetService.GetEmailAsync();
+
+        if (emailPasswordDict.TryGetValue(model.Email, out string storedPassword))
+        {
+            if (storedPassword == model.Password)
+            {
+                Navigation.NavigateTo("Weather");
+            }
+            else
+            {
+                Console.WriteLine("Incorrect Password");
+            }
+        }
+        else
+        {
+            Console.WriteLine("No User Found");
+        }
+    }
+
+}

@@ -1,10 +1,10 @@
-﻿@page "/Signin"
+@page "/Signin"
 @using System.ComponentModel.DataAnnotations
 @inject GetService GetService
 @using MongoDB.Driver
 @inject NavigationManager Navigation
-
-
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@using Microsoft.AspNetCore.Components.Authorization
 
 <EditForm Model="@model" OnValidSubmit="OnValidSubmit">
     <DataAnnotationsValidator />
@@ -25,7 +25,6 @@
     </MudGrid>
 </EditForm>
 
-
 @code {
     RegisterAccountForm model = new RegisterAccountForm();
 
@@ -37,7 +36,6 @@
 
         [Required]
         public string? Password { get; set; }
-
     }
 
     private async Task OnValidSubmit()
@@ -48,7 +46,14 @@
         {
             if (storedPassword == model.Password)
             {
-                Navigation.NavigateTo("Weather");
+                // Mark the user as authenticated and navigate to Weather page
+                var authState = new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity(new[]
+                {
+                    new Claim(ClaimTypes.Name, model.Email)
+                }, "password")));
+
+                ((CustomAuthenticationStateProvider)AuthenticationStateProvider).NotifyAuthenticationStateChanged(Task.FromResult(authState));
+                Navigation.NavigateTo("/Weather");
             }
             else
             {
@@ -60,5 +65,4 @@
             Console.WriteLine("No User Found");
         }
     }
-
 }

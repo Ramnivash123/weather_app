@@ -1,6 +1,7 @@
-﻿@page "/"
-
+@page "/"
 @inject NavigationManager Navigation
+@using Microsoft.AspNetCore.Authentication
+@inject AuthenticationStateProvider AuthenticationStateProvider
 
 <PageTitle>Home</PageTitle>
 
@@ -11,45 +12,35 @@
         </CardHeaderContent>
     </MudCardHeader>
     <MudCardContent Class="d-flex flex-column align-center">
-        <MudButton Variant="Variant.Outlined" Color="Color.Primary" @onclick="NavigateToSignup" Class="mb-2">Sign Up</MudButton>
-        <MudButton Variant="Variant.Outlined" Color="Color.Primary" @onclick="NavigateToSignin">Sign In</MudButton>
+        <!-- Updated to use @onclick for navigation -->
+        <MudButton Variant="Variant.Outlined" Color="Color.Primary" @onclick="NavigateToSignUp" Class="mb-2">Sign Up</MudButton>
+        <MudButton Variant="Variant.Outlined" Color="Color.Primary" @onclick="NavigateToSignIn">Sign In</MudButton>
     </MudCardContent>
 </MudCard>
 
-
-
 @code {
-    private void NavigateToSignup()
+    private bool isAuthenticated;
 
-
-
+    protected override async Task OnInitializedAsync()
     {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        isAuthenticated = user.Identity.IsAuthenticated;
 
-
-
-        Navigation.NavigateTo("/Signup");
-
-
-
+        // Redirect if authenticated
+        if (isAuthenticated)
+        {
+            Navigation.NavigateTo("/Weather", forceLoad: true);
+        }
     }
 
-
-
-
-
-
-
-    private void NavigateToSignin()
-
-
-
+    private void NavigateToSignUp()
     {
+        Navigation.NavigateTo("/Signup");
+    }
 
-
-
+    private void NavigateToSignIn()
+    {
         Navigation.NavigateTo("/Signin");
-
-
-
     }
 }

@@ -1,7 +1,7 @@
 @page "/"
 @inject NavigationManager Navigation
 @using Microsoft.AspNetCore.Authentication
-@inject AuthenticationStateProvider AuthenticationStateProvider
+
 
 <PageTitle>Home</PageTitle>
 
@@ -19,28 +19,15 @@
 </MudCard>
 
 @code {
-    private bool isAuthenticated;
-
-    protected override async Task OnInitializedAsync()
-    {
-        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-        var user = authState.User;
-        isAuthenticated = user.Identity.IsAuthenticated;
-
-        // Redirect if authenticated
-        if (isAuthenticated)
+    
+        private void NavigateToSignUp()
         {
-            Navigation.NavigateTo("/Weather", forceLoad: true);
+            Navigation.NavigateTo("/Signup");
         }
-    }
 
-    private void NavigateToSignUp()
-    {
-        Navigation.NavigateTo("/Signup");
-    }
-
-    private void NavigateToSignIn()
-    {
-        Navigation.NavigateTo("/Signin");
-    }
+        private void NavigateToSignIn()
+        {
+            Navigation.NavigateTo("/Signin");
+        }
+    
 }

@@ -1,5 +1,7 @@
-﻿@page "/weather"
+@page "/Weather"
 @using System.Text.Json
+@inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthenticationStateProvider
 
 <PageTitle>Weather Update</PageTitle>
 
@@ -16,6 +18,7 @@
         <MudText Typo="Typo.body1">Current weather for Coimbatore:</MudText>
         <MudText Typo="Typo.h6">@coimbatoreWeather</MudText> <!-- Display Coimbatore's current weather -->
         @if (coimbatoreWeatherLoading)
+
         {
             <MudText Typo="Typo.body2">Loading current weather for Coimbatore...</MudText>
         }
@@ -23,19 +26,21 @@
 </MudCard>
 
 <MudCard>
-    
+
     <MudCardContent>
         <MudText Typo="Typo.body1">Enter a city to get the weather forecast:</MudText>
         <MudTextField Label="City" @bind-Value="city" Variant="Variant.Outlined" />
         <MudButton Variant="Variant.Text" Color="Color.Primary" OnClick="GetWeatherForCity">Get Weather</MudButton>
 
         @if (cityWeatherInfo.Count > 0)
+
         {
             <MudText Typo="Typo.h6" GutterBottom="true">Weather for @city</MudText>
             <MudSimpleTable Style="overflow-x: auto;">
                 <thead>
                     <tr>
                         @foreach (var h in headings)
+
                         {
                             <th>@h</th>
                         }
@@ -43,9 +48,11 @@
                 </thead>
                 <tbody>
                     @foreach (var row in cityWeatherInfo)
+
                     {
                         <tr>
                             @foreach (var x in row)
+
                             {
                                 <td>@x</td>
                             }
@@ -54,7 +61,9 @@
                 </tbody>
             </MudSimpleTable>
         }
+
         else if (weatherLoading)
+
         {
             <MudText Typo="Typo.body2">Loading weather data...</MudText>
         }
@@ -63,102 +72,220 @@
 
 @code {
     private string city = "";  // City entered by the user for search
+
     private List<string[]> cityWeatherInfo = new List<string[]>(); // Weather info for the searched city
+
     private string coimbatoreWeather = ""; // To store Coimbatore's current weather
+
     private bool coimbatoreWeatherLoading = true;
+
     private bool weatherLoading = false;
 
+
+
     // Table Headings for city weather
+
     private readonly string[] headings = { "Date", "Temperature (°F)", "Conditions" };
 
+
+
     protected override async Task OnInitializedAsync()
+
     {
+
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+
+        var user = authState.User;
+
+
+
+        if (!user.Identity.IsAuthenticated)
+
+        {
+
+            // Redirect to SignIn page if not authenticated
+
+            Navigation.NavigateTo("/Signin");
+
+            return;
+
+        }
+
+
+
         // Fetch current weather for Coimbatore on page load
+
         await GetCoimbatoreWeather();
+
     }
 
+
+
     private async Task GetCoimbatoreWeather()
+
     {
+
         string apiKey = "ETTA4E8CA4YLN4UJSH9EBZD6K"; // Visual Crossing API Key
+
         string coimbatoreApiUrl = "https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/Coimbatore/today?unitGroup=us&key=" + apiKey + "&contentType=json";
 
+
+
         try
+
         {
+
             using (var client = new HttpClient())
+
             {
+
                 var response = await client.GetAsync(coimbatoreApiUrl);
+
                 if (response.IsSuccessStatusCode)
+
                 {
+
                     var json = await response.Content.ReadAsStringAsync();
+
                     var weatherData = JsonDocument.Parse(json);
+
+
 
                     var day = weatherData.RootElement.GetProperty("days")[0]; // Get today's weather
 
+
+
                     var date = day.TryGetProperty("datetime", out var dateProp) ? dateProp.GetString() : "N/A";
+
                     var temp = day.TryGetProperty("temp", out var tempProp) ? tempProp.GetDecimal() : 0;
+
                     var description = day.TryGetProperty("conditions", out var descProp) ? descProp.GetString() : "N/A";
 
+
+
                     coimbatoreWeather = $"{date}: {temp}°F, {description}";
+
                 }
+
                 else
+
                 {
+
                     coimbatoreWeather = "Failed to get weather data for Coimbatore";
+
                 }
+
             }
+
         }
+
         catch (Exception ex)
+
         {
+
             coimbatoreWeather = $"Error: {ex.Message}";
+
         }
+
         finally
+
         {
+
             coimbatoreWeatherLoading = false;
+
         }
+
     }
 
+
+
     private async Task GetWeatherForCity()
+
     {
+
         weatherLoading = true;
+
         cityWeatherInfo.Clear();
 
+
+
         string apiKey = "ETTA4E8CA4YLN4UJSH9EBZD6K"; // Visual Crossing API Key
+
         string apiUrl = $"https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/{city}/last7days?unitGroup=us&key={apiKey}&contentType=json";
 
+
+
         try
+
         {
+
             using (var client = new HttpClient())
+
             {
+
                 var response = await client.GetAsync(apiUrl);
+
                 if (response.IsSuccessStatusCode)
+
                 {
+
                     var json = await response.Content.ReadAsStringAsync();
+
                     var weatherData = JsonDocument.Parse(json);
+
+
 
                     var days = weatherData.RootElement.GetProperty("days");
 
+
+
                     for (int i = 0; i < days.GetArrayLength(); i++)
+
                     {
+
                         var day = days[i];
+
                         var date = day.TryGetProperty("datetime", out var dateProp) ? dateProp.GetString() : "N/A";
+
                         var temp = day.TryGetProperty("temp", out var tempProp) ? tempProp.GetDecimal() : 0;
+
                         var description = day.TryGetProperty("conditions", out var descProp) ? descProp.GetString() : "N/A";
 
+
+
                         cityWeatherInfo.Add(new string[] { date ?? "N/A", $"{temp}°F", description ?? "N/A" });
+
                     }
+
                 }
+
                 else
+
                 {
+
                     cityWeatherInfo.Add(new string[] { "Failed to get weather data", "", "" });
+
                 }
+
             }
+
         }
+
         catch (Exception ex)
+
         {
+
             cityWeatherInfo.Add(new string[] { $"Error: {ex.Message}", "", "" });
+
         }
+
         finally
+
         {
+
             weatherLoading = false;
+
         }
+
     }
 }
